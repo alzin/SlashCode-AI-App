@@ -41,12 +41,19 @@ const DocumentationInterface = () => {
     setResult("");
     try {
       const response = await axios.post(
-        "https://flaskbackend-production.up.railway.app/api/process-requirements",
-        { requirements }
+        "https://flaskbackend-production.up.railway.app/api/process_requirements",
+        // "http://127.0.0.1:5000/api/process_requirements",
+        {
+          withCredentials: true,
+          requirements,
+        }
       );
-      // Assuming the API returns an array of questions
-      setQuestions(response.data.questions);
-      setAnswers({});
+      if (response.data.questions) {
+        setQuestions(response.data.questions);
+        setAnswers({});
+      } else {
+        setResult(response.data.result);
+      }
     } catch (error) {
       console.error("Error processing requirements: ", error);
     }
@@ -67,9 +74,12 @@ const DocumentationInterface = () => {
       }));
 
       const response = await axios.post(
-        // "http://127.0.0.1:5000/api/generate-document",
-        "https://flaskbackend-production.up.railway.app/api/generate-document",
-        { qaPairs } // Send the array of question-answer pairs
+        // "http://127.0.0.1:5000/api/generate_document",
+        "https://flaskbackend-production.up.railway.app/api/generate_document",
+        {
+          withCredentials: true,
+          qaPairs,
+        } // Send the array of question-answer pairs
       );
       // Assuming the API returns some result
       setResult(response.data.result);
@@ -80,6 +90,7 @@ const DocumentationInterface = () => {
   };
 
   const handlePDFDownload = async () => {
+    setLoading(true); // Start loading
     try {
       const response = await axios.post(
         "https://markdowntopdf-production.up.railway.app/generate-pdf",
@@ -92,9 +103,11 @@ const DocumentationInterface = () => {
       link.setAttribute("download", "documentation.pdf");
       document.body.appendChild(link);
       link.click();
+      window.URL.revokeObjectURL(url); // Clean up the URL object
     } catch (error) {
       console.error("Error generating PDF: ", error);
     }
+    setLoading(false); // End loading
   };
 
   return (
@@ -189,7 +202,7 @@ const DocumentationInterface = () => {
               onClick={handlePDFDownload}
               disabled={!result || loading}
             >
-              Download PDF
+              {loading ? <CircularProgress size={24} /> : "Download PDF"}
             </Button>
           </div>
           {result && (
